@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevPlay - Aprende programando</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f5f5f0; color: #1a1a1a; }
+
+    .nav {
+      display: flex; align-items: center; gap: 16px;
+      padding: 12px 24px; background: white;
+      border-bottom: 1px solid #e5e5e0; position: sticky; top: 0; z-index: 10;
+    }
+    .nav-logo { font-size: 20px; font-weight: 600; color: #1a1a1a; }
+    .nav-logo span { color: #7F77DD; }
+    .nav-links { display: flex; gap: 8px; margin-left: auto; }
+    .nav-link {
+      padding: 7px 16px; border-radius: 8px; font-size: 13px;
+      cursor: pointer; border: 1px solid #e5e5e0;
+      background: transparent; color: #666; transition: all 0.15s;
+    }
+    .nav-link:hover, .nav-link.active { background: #f0f0eb; color: #1a1a1a; }
+    .nav-link.primary { background: #7F77DD; color: white; border-color: #7F77DD; }
+    .nav-link.primary:hover { background: #6b63c8; }
+
+    .page { display: none; padding: 32px 24px; max-width: 900px; margin: 0 auto; }
+    .page.active { display: block; }
+
+    .hero { text-align: center; padding: 48px 20px 32px; }
+    .hero h1 { font-size: 32px; font-weight: 600; margin-bottom: 10px; }
+    .hero p { font-size: 16px; color: #666; margin-bottom: 28px; }
+
+    .stats-row { display: flex; gap: 12px; margin-bottom: 28px; }
+    .stat-card { flex: 1; background: white; border-radius: 10px; padding: 16px; text-align: center; border: 1px solid #e5e5e0; }
+    .stat-val { font-size: 26px; font-weight: 600; color: #7F77DD; }
+    .stat-lbl { font-size: 12px; color: #888; margin-top: 4px; }
+
+    .games-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    .game-card {
+      background: white; border: 1px solid #e5e5e0; border-radius: 12px;
+      padding: 20px; cursor: pointer; transition: all 0.15s;
+    }
+    .game-card:hover { border-color: #7F77DD; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(127,119,221,0.15); }
+    .game-icon { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 12px; }
+    .game-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+    .game-card p { font-size: 13px; color: #666; line-height: 1.5; margin-bottom: 12px; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .badge-easy { background: #EAF3DE; color: #3B6D11; }
+    .badge-medium { background: #FAEEDA; color: #854F0B; }
+    .badge-hard { background: #FCEBEB; color: #A32D2D; }
+    .play-btn {
+      width: 100%; padding: 9px; border-radius: 8px;
+      border: 1px solid #7F77DD; background: transparent;
+      color: #7F77DD; font-size: 13px; cursor: pointer; margin-top: 10px; transition: all 0.15s;
+    }
+    .play-btn:hover { background: #7F77DD; color: white; }
+
+    .section-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+    .section-sub { font-size: 13px; color: #888; margin-bottom: 20px; }
+
+    .tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid #e5e5e0; }
+    .tab {
+      padding: 9px 18px; font-size: 13px; cursor: pointer;
+      border: none; background: transparent; color: #888;
+      border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s;
+    }
+    .tab.active { color: #7F77DD; border-bottom-color: #7F77DD; font-weight: 500; }
+
+    .game-area { background: white; border: 1px solid #e5e5e0; border-radius: 12px; overflow: hidden; }
+    .game-header {
+      padding: 14px 18px; border-bottom: 1px solid #e5e5e0;
+      display: flex; align-items: center; gap: 12px; background: #fafaf8;
+    }
+    .game-header h3 { font-size: 15px; font-weight: 600; }
+    .score-box { margin-left: auto; font-size: 13px; color: #888; }
+    .score-box span { color: #7F77DD; font-weight: 600; }
+    .game-body { padding: 24px; }
+
+    .quiz-question { font-size: 16px; color: #1a1a1a; margin-bottom: 18px; line-height: 1.6; font-weight: 500; }
+    .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+    .quiz-option {
+      padding: 11px 16px; border: 1px solid #e5e5e0; border-radius: 8px;
+      cursor: pointer; font-size: 14px; color: #1a1a1a; background: white;
+      text-align: left; transition: all 0.15s;
+    }
+    .quiz-option:hover:not(:disabled) { border-color: #7F77DD; background: #EEEDFE; color: #3C3489; }
+    .quiz-option.correct { border-color: #3B6D11 !important; background: #EAF3DE !important; color: #3B6D11 !important; }
+    .quiz-option.wrong { border-color: #A32D2D !important; background: #FCEBEB !important; color: #A32D2D !important; }
+
+    .next-btn {
+      margin-top: 16px; padding: 10px 22px; background: #7F77DD;
+      color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;
+    }
+    .next-btn:hover { background: #6b63c8; }
+
+    .feedback { padding: 11px 16px; border-radius: 8px; font-size: 13px; margin-top: 12px; display: none; line-height: 1.5; }
+    .feedback.ok { background: #EAF3DE; color: #3B6D11; border: 1px solid #c0dd97; }
+    .feedback.err { background: #FCEBEB; color: #A32D2D; border: 1px solid #f09595; }
+
+    .memory-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 400px; margin: 0 auto; }
+    .mem-card {
+      aspect-ratio: 1; border-radius: 8px; border: 1px solid #e5e5e0;
+      background: #f5f5f0; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-family: monospace; font-size: 12px; color: #888;
+      text-align: center; padding: 4px; transition: all 0.2s; user-select: none;
+    }
+    .mem-card:hover { border-color: #7F77DD; }
+    .mem-card.flipped { background: #EEEDFE; border-color: #7F77DD; color: #3C3489; font-size: 11px; font-weight: 600; }
+    .mem-card.matched { background: #EAF3DE; border-color: #3B6D11; color: #3B6D11; font-size: 11px; font-weight: 600; }
+
+    .hangman-word { display: flex; gap: 8px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+    .letter-box {
+      width: 34px; height: 44px; border-bottom: 2px solid #1a1a1a;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; font-weight: 600; font-family: monospace; color: #1a1a1a;
+    }
+    .keyboard { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 420px; margin: 0 auto; }
+    .key-btn {
+      width: 38px; height: 38px; border-radius: 8px; border: 1px solid #e5e5e0;
+      background: #f5f5f0; font-size: 13px; cursor: pointer; color: #1a1a1a; transition: all 0.1s;
+    }
+    .key-btn:hover:not(:disabled) { border-color: #7F77DD; background: #EEEDFE; color: #3C3489; }
+    .key-btn:disabled { opacity: 0.3; cursor: default; }
+    .key-btn.hit { background: #EAF3DE; border-color: #3B6D11; color: #3B6D11; }
+    .key-btn.miss { background: #FCEBEB; border-color: #A32D2D; color: #A32D2D; }
+
+    .code-editor {
+      background: #1e1e2e; border-radius: 8px; padding: 16px;
+      font-family: monospace; font-size: 13px; color: #cdd6f4;
+      width: 100%; min-height: 140px; border: none; resize: vertical; outline: none; line-height: 1.6;
+    }
+    .run-btn {
+      padding: 9px 22px; background: #1D9E75; color: white;
+      border: none; border-radius: 8px; cursor: pointer; font-size: 13px; margin-top: 10px;
+    }
+    .run-btn:hover { background: #178a65; }
+    .output-box {
+      background: #f5f5f0; border-radius: 8px; padding: 14px;
+      font-family: monospace; font-size: 13px; color: #1a1a1a;
+      margin-top: 10px; min-height: 56px; border: 1px solid #e5e5e0; line-height: 1.6;
+    }
+
+    .code-snippet { background: white; border: 1px solid #e5e5e0; border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+    .snippet-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .snippet-title { font-size: 14px; font-weight: 600; }
+    .copy-btn {
+      padding: 5px 14px; border-radius: 8px; border: 1px solid #e5e5e0;
+      background: transparent; color: #888; font-size: 12px; cursor: pointer; transition: all 0.15s;
+    }
+    .copy-btn:hover { border-color: #7F77DD; color: #7F77DD; }
+    .snippet-code {
+      background: #1e1e2e; border-radius: 8px; padding: 16px;
+      font-family: monospace; font-size: 12px; color: #cdd6f4;
+      overflow-x: auto; white-space: pre; line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">&lt;<span>Dev</span>Play/&gt;</div>
+  <div class="nav-links">
+    <button class="nav-link active" onclick="showPage('home')">Inicio</button>
+    <button class="nav-link" onclick="showPage('games')">Juegos</button>
+    <button class="nav-link" onclick="showPage('codes')">Códigos</button>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div id="page-home" class="page active">
+  <div class="hero">
+    <h1>Aprende a programar jugando 🎮</h1>
+    <p>Juegos interactivos para practicar HTML, CSS, JavaScript y más</p>
+    <button class="nav-link primary" onclick="showPage('games')" style="font-size:15px;padding:12px 28px;">Ver juegos →</button>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-val">4</div><div class="stat-lbl">Juegos</div></div>
+    <div class="stat-card"><div class="stat-val">3</div><div class="stat-lbl">Niveles</div></div>
+    <div class="stat-card"><div class="stat-val">∞</div><div class="stat-lbl">Diversión</div></div>
+  </div>
+  <div class="games-grid">
+    <div class="game-card" onclick="showPage('games');showGame('quiz')">
+      <div class="game-icon" style="background:#EEEDFE;">🧠</div>
+      <h3>Quiz de código</h3>
+      <p>Pon a prueba tus conocimientos de JS, HTML y CSS</p>
+      <span class="badge badge-easy">Fácil</span>
+      <button class="play-btn">Jugar ahora</button>
+    </div>
+    <div class="game-card" onclick="showPage('games');showGame('memory')">
+      <div class="game-icon" style="background:#E1F5EE;">🃏</div>
+      <h3>Memory de conceptos</h3>
+      <p>Empareja términos de programación con su definición</p>
+      <span class="badge badge-medium">Medio</span>
+      <button class="play-btn">Jugar ahora</button>
+    </div>
+    <div class="game-card" onclick="showPage('games');showGame('hangman')">
+      <div class="game-icon" style="background:#FAEEDA;">💀</div>
+      <h3>Ahorcado coder</h3>
+      <p>Adivina palabras clave de programación letra a letra</p>
+      <span class="badge badge-easy">Fácil</span>
+      <button class="play-btn">Jugar ahora</button>
+    </div>
+    <div class="game-card" onclick="showPage('games');showGame('sandbox')">
+      <div class="game-icon" style="background:#FAECE7;">⚡</div>
+      <h3>Sandbox JS</h3>
+      <p>Escribe y ejecuta JavaScript en el navegador</p>
+      <span class="badge badge-hard">Avanzado</span>
+      <button class="play-btn">Jugar ahora</button>
+    </div>
+  </div>
+</div>
+
+<!-- GAMES -->
+<div id="page-games" class="page">
+  <div class="tabs">
+    <button class="tab active" id="tab-quiz" onclick="showGame('quiz')">🧠 Quiz</button>
+    <button class="tab" id="tab-memory" onclick="showGame('memory')">🃏 Memory</button>
+    <button class="tab" id="tab-hangman" onclick="showGame('hangman')">💀 Ahorcado</button>
+    <button class="tab" id="tab-sandbox" onclick="showGame('sandbox')">⚡ Sandbox</button>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="game-quiz" class="game-area">
+    <div class="game-header">
+      <h3>🧠 Quiz de programación</h3>
+      <div class="score-box">Puntos: <span id="quiz-score">0</span></div>
+    </div>
+    <div class="game-body">
+      <div id="quiz-q" class="quiz-question"></div>
+      <div id="quiz-opts" class="quiz-options"></div>
+      <div id="quiz-feedback" class="feedback"></div>
+      <button class="next-btn" id="quiz-next" onclick="nextQuestion()" style="display:none;">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- MEMORY -->
+  <div id="game-memory" class="game-area" style="display:none;">
+    <div class="game-header">
+      <h3>🃏 Memory de conceptos</h3>
+      <div class="score-box">Pares: <span id="mem-score">0</span>/6</div>
+    </div>
+    <div class="game-body">
+      <div class="memory-grid" id="mem-grid"></div>
+      <button class="next-btn" onclick="initMemory()" style="display:block;margin-top:18px;">Reiniciar</button>
+    </div>
+  </div>
+
+  <!-- HANGMAN -->
+  <div id="game-hangman" class="game-area" style="display:none;">
+    <div class="game-header">
+      <h3>💀 Ahorcado coder</h3>
+      <div class="score-box">Errores: <span id="hang-errors">0</span>/6</div>
+    </div>
+    <div class="game-body">
+      <div id="hang-hint" style="font-size:13px;color:#888;text-align:center;margin-bottom:10px;"></div>
+      <div class="hangman-word" id="hang-word"></div>
+      <div class="keyboard" id="hang-keys"></div>
+      <div id="hang-msg" class="feedback" style="text-align:center;margin-top:14px;"></div>
+      <button class="next-btn" id="hang-next" onclick="initHangman()" style="display:none;margin-top:14px;width:100%;">Nueva palabra</button>
+    </div>
+  </div>
+
+  <!-- SANDBOX -->
+  <div id="game-sandbox" class="game-area" style="display:none;">
+    <div class="game-header"><h3>⚡ Sandbox JavaScript</h3></div>
+    <div class="game-body">
+      <p style="font-size:13px;color:#888;margin-bottom:10px;">Escribe JavaScript y presiona Ejecutar:</p>
+      <textarea class="code-editor" id="sandbox-code" spellcheck="false">// Prueba tu código aquí
+const nombres = ['Ana', 'Luis', 'María'];
+nombres.forEach(n => console.log('Hola, ' + n + '!'));</textarea>
+      <button class="run-btn" onclick="runSandbox()">▶ Ejecutar</button>
+      <div class="output-box" id="sandbox-out">// El resultado aparecerá aquí</div>
+    </div>
+  </div>
+</div>
+
+<!-- CODES -->
+<div id="page-codes" class="page">
+  <div class="section-title">Biblioteca de códigos</div>
+  <div class="section-sub">Snippets útiles para aprender y copiar</div>
+  <div class="tabs">
+    <button class="tab active" id="ctab-html" onclick="showCodeTab('html')">HTML</button>
+    <button class="tab" id="ctab-css" onclick="showCodeTab('css')">CSS</button>
+    <button class="tab" id="ctab-js" onclick="showCodeTab('js')">JavaScript</button>
+  </div>
+  <div id="codes-content"></div>
+</div>
+
+<script>
+  const quizData = [
+    { q: "¿Cuál es el resultado de typeof null en JavaScript?", opts: ["null","undefined","object","string"], ans: 2, exp: "typeof null devuelve 'object', es un bug histórico de JS." },
+    { q: "¿Qué etiqueta HTML se usa para un enlace?", opts: ["<link>","<a>","<href>","<url>"], ans: 1, exp: "La etiqueta <a> (anchor) crea hipervínculos." },
+    { q: "¿Cuál propiedad CSS centra texto?", opts: ["align: center","text-align: center","center: true","font-align: center"], ans: 1, exp: "text-align: center centra el contenido de texto." },
+    { q: "¿Qué método agrega un elemento al final de un array?", opts: ["push()","pop()","shift()","append()"], ans: 0, exp: "push() agrega elementos al final del array." },
+    { q: "¿Cuál es la diferencia entre == y ===?", opts: ["Ninguna","=== verifica tipo y valor","== verifica tipo","=== solo funciona con strings"], ans: 1, exp: "=== compara valor y tipo de dato (comparación estricta)." },
+    { q: "¿Qué significa CSS?", opts: ["Computer Style Sheets","Cascading Style Sheets","Colorful Style System","Creative Styling Syntax"], ans: 1, exp: "CSS = Cascading Style Sheets (Hojas de estilo en cascada)." },
+    { q: "¿Cuál etiqueta define el cuerpo de una página HTML?", opts: ["<main>","<content>","<body>","<page>"], ans: 2, exp: "El elemento <body> contiene todo el contenido visible." },
+    { q: "¿Qué hace el método .map() en JavaScript?", opts: ["Filtra elementos","Crea un nuevo array transformando cada elemento","Ordena el array","Busca un elemento"], ans: 1, exp: ".map() retorna un nuevo array con cada elemento transformado." }
+  ];
+
+  let qIndex = 0, quizScore = 0, answered = false;
+
+  function initQuiz() {
+    qIndex = 0; quizScore = 0; answered = false;
+    document.getElementById('quiz-score').textContent = 0;
+    loadQuestion();
+  }
+
+  function loadQuestion() {
+    const q = quizData[qIndex % quizData.length];
+    document.getElementById('quiz-q').textContent = (qIndex + 1) + '. ' + q.q;
+    const opts = document.getElementById('quiz-opts');
+    opts.innerHTML = '';
+    q.opts.forEach((o, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'quiz-option';
+      btn.textContent = o;
+      btn.onclick = () => selectAnswer(i);
+      opts.appendChild(btn);
+    });
+    document.getElementById('quiz-feedback').style.display = 'none';
+    document.getElementById('quiz-next').style.display = 'none';
+    answered = false;
+  }
+
+  function selectAnswer(i) {
+    if (answered) return;
+    answered = true;
+    const q = quizData[qIndex % quizData.length];
+    const btns = document.querySelectorAll('.quiz-option');
+    const fb = document.getElementById('quiz-feedback');
+    btns.forEach((b, idx) => {
+      b.disabled = true;
+      if (idx === q.ans) b.classList.add('correct');
+      else if (idx === i) b.classList.add('wrong');
+    });
+    if (i === q.ans) {
+      quizScore++;
+      document.getElementById('quiz-score').textContent = quizScore;
+      fb.className = 'feedback ok';
+      fb.textContent = '✓ Correcto! ' + q.exp;
+    } else {
+      fb.className = 'feedback err';
+      fb.textContent = '✗ Incorrecto. ' + q.exp;
+    }
+    fb.style.display = 'block';
+    document.getElementById('quiz-next').style.display = 'block';
+  }
+
+  function nextQuestion() { qIndex++; loadQuestion(); }
+
+  const memPairs = [
+    ['var','variable'], ['for','bucle'], ['if','condicional'],
+    ['fn()','función'], ['[]','array'], ['{}','objeto']
+  ];
+  let memFlipped = [], memMatched = 0, memCards = [];
+
+  function initMemory() {
+    memFlipped = []; memMatched = 0;
+    document.getElementById('mem-score').textContent = 0;
+    const all = [...memPairs.flatMap((p,i) => [{text:p[0],pair:i},{text:p[1],pair:i}])];
+    for (let i = all.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [all[i],all[j]]=[all[j],all[i]]; }
+    memCards = all;
+    const grid = document.getElementById('mem-grid');
+    grid.innerHTML = '';
+    all.forEach((c, idx) => {
+      const d = document.createElement('div');
+      d.className = 'mem-card';
+      d.textContent = '?';
+      d.dataset.idx = idx;
+      d.onclick = () => flipCard(idx);
+      grid.appendChild(d);
+    });
+  }
+
+  function flipCard(idx) {
+    if (memFlipped.length === 2) return;
+    const cards = document.querySelectorAll('.mem-card');
+    const card = cards[idx];
+    if (card.classList.contains('matched') || card.classList.contains('flipped')) return;
+    card.classList.add('flipped');
+    card.textContent = memCards[idx].text;
+    memFlipped.push(idx);
+    if (memFlipped.length === 2) {
+      const [a, b] = memFlipped;
+      if (memCards[a].pair === memCards[b].pair && a !== b) {
+        cards[a].classList.remove('flipped'); cards[a].classList.add('matched');
+        cards[b].classList.remove('flipped'); cards[b].classList.add('matched');
+        memMatched++;
+        document.getElementById('mem-score').textContent = memMatched;
+        memFlipped = [];
+      } else {
+        setTimeout(() => {
+          cards[a].classList.remove('flipped'); cards[a].textContent = '?';
+          cards[b].classList.remove('flipped'); cards[b].textContent = '?';
+          memFlipped = [];
+        }, 900);
+      }
+    }
+  }
+
+  const hangWords = [
+    {w:'VARIABLE',h:'Almacena un valor'},{w:'FUNCION',h:'Bloque de código reutilizable'},
+    {w:'BUCLE',h:'Repite código'},{w:'ARRAY',h:'Lista de elementos'},
+    {w:'OBJETO',h:'Colección de propiedades'},{w:'CLASE',h:'Plantilla para objetos'},
+    {w:'EVENTO',h:'Acción del usuario'},{w:'CONSOLA',h:'Herramienta de debug'},
+    {w:'METODO',h:'Función de un objeto'},{w:'PARAMETRO',h:'Valor que recibe una función'}
+  ];
+  let hangCurrent, hangGuessed, hangErrors;
+
+  function initHangman() {
+    hangCurrent = hangWords[Math.floor(Math.random()*hangWords.length)];
+    hangGuessed = new Set(); hangErrors = 0;
+    document.getElementById('hang-errors').textContent = 0;
+    document.getElementById('hang-hint').textContent = '💡 Pista: ' + hangCurrent.h;
+    document.getElementById('hang-msg').style.display = 'none';
+    document.getElementById('hang-next').style.display = 'none';
+    renderHangWord(); renderKeyboard();
+  }
+
+  function renderHangWord() {
+    const div = document.getElementById('hang-word');
+    div.innerHTML = '';
+    hangCurrent.w.split('').forEach(l => {
+      const box = document.createElement('div');
+      box.className = 'letter-box';
+      box.textContent = hangGuessed.has(l) ? l : '';
+      div.appendChild(box);
+    });
+  }
+
+  function renderKeyboard() {
+    const div = document.getElementById('hang-keys');
+    div.innerHTML = '';
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(l => {
+      const btn = document.createElement('button');
+      btn.className = 'key-btn';
+      btn.textContent = l;
+      if (hangGuessed.has(l)) {
+        btn.disabled = true;
+        btn.classList.add(hangCurrent.w.includes(l) ? 'hit' : 'miss');
+      }
+      btn.onclick = () => guessLetter(l);
+      div.appendChild(btn);
+    });
+  }
+
+  function guessLetter(l) {
+    hangGuessed.add(l);
+    if (!hangCurrent.w.includes(l)) { hangErrors++; document.getElementById('hang-errors').textContent = hangErrors; }
+    renderHangWord(); renderKeyboard();
+    const won = hangCurrent.w.split('').every(c => hangGuessed.has(c));
+    const lost = hangErrors >= 6;
+    const msg = document.getElementById('hang-msg');
+    if (won) { msg.className='feedback ok'; msg.textContent='🎉 ¡Ganaste! La palabra era: '+hangCurrent.w; msg.style.display='block'; document.getElementById('hang-next').style.display='block'; disableKeys(); }
+    else if (lost) { msg.className='feedback err'; msg.textContent='😢 Perdiste. La palabra era: '+hangCurrent.w; msg.style.display='block'; document.getElementById('hang-next').style.display='block'; disableKeys(); }
+  }
+
+  function disableKeys() { document.querySelectorAll('.key-btn').forEach(b => b.disabled = true); }
+
+  function runSandbox() {
+    const code = document.getElementById('sandbox-code').value;
+    const out = document.getElementById('sandbox-out');
+    const logs = [];
+    const origLog = console.log;
+    console.log = (...a) => logs.push(a.map(x => typeof x === 'object' ? JSON.stringify(x) : x).join(' '));
+    try { eval(code); out.textContent = logs.length ? logs.join('\n') : '// Sin salida en consola'; }
+    catch(e) { out.textContent = '❌ Error: ' + e.message; }
+    console.log = origLog;
+  }
+
+  const codeSnippets = {
+    html: [
+      { title: 'Estructura básica HTML5', code: `<!DOCTYPE html>\n<html lang="es">\n<head>\n  <meta charset="UTF-8">\n  <title>Mi página</title>\n</head>\n<body>\n  <h1>Hola Mundo</h1>\n</body>\n</html>` },
+      { title: 'Formulario de contacto', code: `<form>\n  <input type="text" placeholder="Nombre">\n  <input type="email" placeholder="Email">\n  <textarea placeholder="Mensaje"></textarea>\n  <button type="submit">Enviar</button>\n</form>` },
+      { title: 'Lista y tabla', code: `<ul>\n  <li>HTML</li>\n  <li>CSS</li>\n  <li>JavaScript</li>\n</ul>\n\n<table>\n  <tr><th>Nombre</th><th>Edad</th></tr>\n  <tr><td>Ana</td><td>25</td></tr>\n</table>` }
+    ],
+    css: [
+      { title: 'Flexbox centrado', code: `.contenedor {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  height: 100vh;\n}` },
+      { title: 'Grid responsive', code: `.grid {\n  display: grid;\n  grid-template-columns:\n    repeat(auto-fit, minmax(250px, 1fr));\n  gap: 16px;\n}` },
+      { title: 'Variables CSS', code: `:root {\n  --color-primary: #7F77DD;\n  --spacing: 16px;\n  --radius: 8px;\n}\n\n.btn {\n  background: var(--color-primary);\n  padding: var(--spacing);\n  border-radius: var(--radius);\n}` }
+    ],
+    js: [
+      { title: 'Fetch API', code: `async function getData(url) {\n  try {\n    const res = await fetch(url);\n    const data = await res.json();\n    console.log(data);\n  } catch (err) {\n    console.error('Error:', err);\n  }\n}` },
+      { title: 'Métodos de array', code: `const nums = [1, 2, 3, 4, 5];\n\nconst pares = nums.filter(n => n % 2 === 0);\nconst dobles = nums.map(n => n * 2);\nconst suma = nums.reduce((a, b) => a + b, 0);\n\nconsole.log(pares, dobles, suma);` },
+      { title: 'Clase ES6', code: `class Animal {\n  constructor(nombre) {\n    this.nombre = nombre;\n  }\n  hablar() {\n    return this.nombre + ' hace un sonido.';\n  }\n}\n\nclass Perro extends Animal {\n  hablar() {\n    return this.nombre + ' ladra.';\n  }\n}\n\nconst d = new Perro('Rex');\nconsole.log(d.hablar());` }
+    ]
+  };
+
+  let currentCodeTab = 'html';
+
+  function showCodeTab(tab) {
+    currentCodeTab = tab;
+    ['html','css','js'].forEach(t => {
+      document.getElementById('ctab-'+t).classList.toggle('active', t===tab);
+    });
+    renderCodes();
+  }
+
+  function renderCodes() {
+    const snips = codeSnippets[currentCodeTab];
+    const div = document.getElementById('codes-content');
+    div.innerHTML = '';
+    snips.forEach(s => {
+      const card = document.createElement('div');
+      card.className = 'code-snippet';
+      card.innerHTML = `
+        <div class="snippet-header">
+          <span class="snippet-title">${s.title}</span>
+          <button class="copy-btn" onclick="copyCode(this, \`${encodeURIComponent(s.code)}\`)">Copiar</button>
+        </div>
+        <pre class="snippet-code">${s.code.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
+      `;
+      div.appendChild(card);
+    });
+  }
+
+  function copyCode(btn, encoded) {
+    navigator.clipboard.writeText(decodeURIComponent(encoded)).then(() => {
+      btn.textContent = '✓ Copiado';
+      setTimeout(() => btn.textContent = 'Copiar', 1500);
+    });
+  }
+
+  function showPage(p) {
+    document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
+    document.getElementById('page-'+p).classList.add('active');
+    document.querySelectorAll('.nav-link').forEach(x => x.classList.remove('active'));
+    const map = {home:0,games:1,codes:2};
+    document.querySelectorAll('.nav-link')[map[p]]?.classList.add('active');
+  }
+
+  function showGame(g) {
+    ['quiz','memory','hangman','sandbox'].forEach(x => {
+      document.getElementById('game-'+x).style.display = x===g ? 'block' : 'none';
+      const t = document.getElementById('tab-'+x);
+      if (t) t.classList.toggle('active', x===g);
+    });
+  }
+
+  initQuiz();
+  initMemory();
+  initHangman();
+  renderCodes();
+</script>
+</body>
+</html>
